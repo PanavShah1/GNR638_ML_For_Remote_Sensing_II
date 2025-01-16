@@ -29,7 +29,6 @@ import numpy as np
 #results are presented.
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--feature', help='feature', type=str, default='dumy_feature')
 parser.add_argument('--classifier', help='classifier', type=str, default='dumy_classifier')
 args = parser.parse_args()
 
@@ -39,18 +38,56 @@ DATA_PATH = '../data/'
 #somewhat sorted by similarity so that the confusion matrix looks more
 #structured (indoor and then urban and then rural).
 
-CATEGORIES = ['Kitchen', 'Store', 'Bedroom', 'LivingRoom', 'Office',
-              'Industrial', 'Suburb', 'InsideCity', 'TallBuilding', 'Street',
-              'Highway', 'OpenCountry', 'Coast', 'Mountain', 'Forest']
+CATEGORIES = [
+    'agricultural',
+    'airplane',
+    'baseballdiamond',
+    'beach',
+    'buildings',
+    'chaparral',
+    'denseresidential',
+    'forest',
+    'freeway',
+    'golfcourse',
+    'harbor',
+    'intersection',
+    'mediumresidential',
+    'mobilehomepark',
+    'overpass',
+    'parkinglot',
+    'river',
+    'runway',
+    'sparseresidential',
+    'storagetanks',
+    'tenniscourt'
+]
 
 CATE2ID = {v: k for k, v in enumerate(CATEGORIES)}
 
-ABBR_CATEGORIES = ['Kit', 'Sto', 'Bed', 'Liv', 'Off', 'Ind', 'Sub',
-                   'Cty', 'Bld', 'St', 'HW', 'OC', 'Cst', 'Mnt', 'For']
+ABBR_CATEGORIES  = [
+    'agr',
+    'air',
+    'bas',
+    'bea',
+    'bui',
+    'cha',
+    'den',
+    'for',
+    'fre',
+    'gol',
+    'har',
+    'int',
+    'med',
+    'mob',
+    'ove',
+    'par',
+    'riv',
+    'run',
+    'spa',
+    'sto',
+    'ten'
+]
 
-
-FEATURE = args.feature
-# FEATUR  = 'bag of sift'
 
 CLASSIFIER = args.classifier
 # CLASSIFIER = 'support vector machine'
@@ -59,7 +96,7 @@ CLASSIFIER = args.classifier
 #simplicity, we assume this is the number of test cases per category, as
 #well.
 
-NUM_TRAIN_PER_CAT = 100
+NUM_TRAIN_PER_CAT = 70
 
 
 def main():
@@ -78,41 +115,30 @@ def main():
     # dimensionality of each image representation. See the starter code for
     # each function for more details.
 
-    if FEATURE == 'tiny_image':
-        # YOU CODE get_tiny_images.py 
-        train_image_feats = get_tiny_images(train_image_paths)
-        test_image_feats = get_tiny_images(test_image_paths)
+    # YOU CODE build_vocabulary.py
+    if os.path.isfile('vocab.pkl') is False:
+        print('No existing visual word vocabulary found. Computing one from training images\n')
+        vocab_size = 400
+        vocab = build_vocabulary(train_image_paths, vocab_size)
+        with open('vocab.pkl', 'wb') as handle:
+            pickle.dump(vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    elif FEATURE == 'bag_of_sift':
-        # YOU CODE build_vocabulary.py
-        if os.path.isfile('vocab.pkl') is False:
-            print('No existing visual word vocabulary found. Computing one from training images\n')
-            vocab_size = 400   ### Vocab_size is up to you. Larger values will work better (to a point) but be slower to comput.
-            vocab = build_vocabulary(train_image_paths, vocab_size)
-            with open('vocab.pkl', 'wb') as handle:
-                pickle.dump(vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        if os.path.isfile('train_image_feats_1.pkl') is False:
-            # YOU CODE get_bags_of_sifts.py
-            train_image_feats = get_bags_of_sifts(train_image_paths);
-            with open('train_image_feats_1.pkl', 'wb') as handle:
-                pickle.dump(train_image_feats, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
-            with open('train_image_feats_1.pkl', 'rb') as handle:
-                train_image_feats = pickle.load(handle)
-
-        if os.path.isfile('test_image_feats_1.pkl') is False:
-            test_image_feats  = get_bags_of_sifts(test_image_paths);
-            with open('test_image_feats_1.pkl', 'wb') as handle:
-                pickle.dump(test_image_feats, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
-            with open('test_image_feats_1.pkl', 'rb') as handle:
-                test_image_feats = pickle.load(handle)
-    elif FEATURE == 'dumy_feature':
-        train_image_feats = []
-        test_image_feats = []
+    if os.path.isfile('train_image_feats_1.pkl') is False:
+        # YOU CODE get_bags_of_sifts.py
+        train_image_feats = get_bags_of_sifts(train_image_paths);
+        with open('train_image_feats_1.pkl', 'wb') as handle:
+            pickle.dump(train_image_feats, handle, protocol=pickle.HIGHEST_PROTOCOL)
     else:
-        raise NameError('Unknown feature type')
+        with open('train_image_feats_1.pkl', 'rb') as handle:
+            train_image_feats = pickle.load(handle)
+
+    if os.path.isfile('test_image_feats_1.pkl') is False:
+        test_image_feats  = get_bags_of_sifts(test_image_paths);
+        with open('test_image_feats_1.pkl', 'wb') as handle:
+            pickle.dump(test_image_feats, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open('test_image_feats_1.pkl', 'rb') as handle:
+            test_image_feats = pickle.load(handle)
 
     # TODO Step 2: 
     # Classify each test image by training and using the appropriate classifier
@@ -125,16 +151,9 @@ def main():
     if CLASSIFIER == 'nearest_neighbor':
         # YOU CODE nearest_neighbor_classify.py
         predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
-
     elif CLASSIFIER == 'support_vector_machine':
         # YOU CODE svm_classify.py
         predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats)
-
-    elif CLASSIFIER == 'dumy_classifier':
-        # The dummy classifier simply predicts a random category for
-        # every test case
-        predicted_categories = test_labels[:]
-        shuffle(predicted_categories)
     else:
         raise NameError('Unknown classifier type')
 
