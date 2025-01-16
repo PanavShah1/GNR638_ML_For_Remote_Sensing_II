@@ -14,6 +14,8 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .config import CATEGORIES, VOCAB_SIZE
+
 # Step 0: Set up parameters, category list, and image paths.
 
 #For this project, you will need to report performance for three
@@ -29,63 +31,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--classifier', help='classifier', type=str, default='dumy_classifier')
 args = parser.parse_args()
 
-VOCAB_SIZE = 400
 DATA_PATH = '../datasets/images/'
 
 #This is the list of categories / directories to use. The categories are
 #somewhat sorted by similarity so that the confusion matrix looks more
 #structured (indoor and then urban and then rural).
 
-CATEGORIES = [
-    'agricultural',
-    'airplane',
-    'baseballdiamond',
-    'beach',
-    'buildings',
-    'chaparral',
-    'denseresidential',
-    'forest',
-    'freeway',
-    'golfcourse',
-    'harbor',
-    'intersection',
-    'mediumresidential',
-    'mobilehomepark',
-    'overpass',
-    'parkinglot',
-    'river',
-    'runway',
-    'sparseresidential',
-    'storagetanks',
-    'tenniscourt'
-]
-
 CATE2ID = {v: k for k, v in enumerate(CATEGORIES)}
-
-ABBR_CATEGORIES  = [
-    'agr',
-    'air',
-    'bas',
-    'bea',
-    'bui',
-    'cha',
-    'den',
-    'for',
-    'fre',
-    'gol',
-    'har',
-    'int',
-    'med',
-    'mob',
-    'ove',
-    'par',
-    'riv',
-    'run',
-    'spa',
-    'sto',
-    'ten'
-]
-
+ABBR_CATEGORIES = [cat[:3] for cat in CATEGORIES]
 
 CLASSIFIER = args.classifier
 # CLASSIFIER = 'support vector machine'

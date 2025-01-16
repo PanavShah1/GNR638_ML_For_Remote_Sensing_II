@@ -3,6 +3,8 @@ from __future__ import print_function
 import numpy as np
 import scipy.spatial.distance as distance
 
+from .config import CATEGORIES
+
 def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats):
     ###########################################################################
     # TODO:                                                                   #
@@ -36,9 +38,6 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
             category for each testing image.
     '''
     
-    CATEGORIES = ['Kitchen', 'Store', 'Bedroom', 'LivingRoom', 'Office',
-              'Industrial', 'Suburb', 'InsideCity', 'TallBuilding', 'Street',
-              'Highway', 'OpenCountry', 'Coast', 'Mountain', 'Forest']
     K = 1
     
     N = train_image_feats.shape[0]
