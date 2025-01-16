@@ -1,11 +1,9 @@
 from __future__ import print_function
-from random import shuffle
 import os
 import argparse
 import pickle
 
 from get_image_paths import get_image_paths
-from get_tiny_images import get_tiny_images
 from build_vocabulary import build_vocabulary
 from get_bags_of_sifts import get_bags_of_sifts
 from visualize import visualize
@@ -21,9 +19,8 @@ import numpy as np
 #For this project, you will need to report performance for three
 #combinations of features / classifiers. It is suggested you code them in
 #this order, as well:
-# 1) Tiny image features and nearest neighbor classifier
-# 2) Bag of sift features and nearest neighbor classifier
-# 3) Bag of sift features and linear SVM classifier
+# 1) Bag of sift features and nearest neighbor classifier
+# 2) Bag of sift features and linear SVM classifier
 #The starter code is initialized to 'placeholder' just so that the starter
 #code does not crash when run unmodified and you can get a preview of how
 #results are presented.
@@ -32,7 +29,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--classifier', help='classifier', type=str, default='dumy_classifier')
 args = parser.parse_args()
 
-DATA_PATH = '../data/'
+VOCAB_SIZE = 400
+DATA_PATH = '../datasets/images/'
 
 #This is the list of categories / directories to use. The categories are
 #somewhat sorted by similarity so that the confusion matrix looks more
@@ -118,8 +116,7 @@ def main():
     # YOU CODE build_vocabulary.py
     if os.path.isfile('vocab.pkl') is False:
         print('No existing visual word vocabulary found. Computing one from training images\n')
-        vocab_size = 400
-        vocab = build_vocabulary(train_image_paths, vocab_size)
+        vocab = build_vocabulary(train_image_paths, VOCAB_SIZE)
         with open('vocab.pkl', 'wb') as handle:
             pickle.dump(vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
