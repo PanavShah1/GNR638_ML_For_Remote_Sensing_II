@@ -13,10 +13,11 @@ from visualization import visualize
 from time import time
 
 ## Config variables
-IMAGES_PATH = "./datasets/UCMerced_LandUse/Images"
-VOCAB_SIZE = 400
+IMAGES_PATH = "../datasets/UCMerced_LandUse/Images"
+VOCAB_SIZE = 1000
 
 os.makedirs("./cache", exist_ok=True)
+os.makedirs("./output", exist_ok=True)
 
 ## Initialize SIFT
 SIFT = cv2.SIFT_create()  # type: ignore
@@ -113,8 +114,8 @@ else:
         pickle.dump(all_keypoints, f)
 
 ## Generate a vocabulary
-if os.path.exists("cache/vocab_model.pkl"):
-    with open("cache/vocab_model.pkl", "rb") as f:
+if os.path.exists(f"cache/vocab_model_{VOCAB_SIZE}.pkl"):
+    with open(f"cache/vocab_model_{VOCAB_SIZE}.pkl", "rb") as f:
         vocab_model = pickle.load(f)
 else:
     vocab_model = KMeans(n_clusters=VOCAB_SIZE + 1, random_state=42)
@@ -122,13 +123,13 @@ else:
     start = time()
     vocab_model.fit(all_keypoints)
     print(f"KMeans model trained in {time() - start} seconds")
-    with open("cache/vocab_model.pkl", "wb") as f:
+    with open(f"cache/vocab_model_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(vocab_model, f)
 
-
+bows, val_bows, test_bows = None, None, None
 ## Generate the Bag of Words representation of the images
-if os.path.exists("cache/train_bows.pkl"):
-    with open("cache/train_bows.pkl", "rb") as f:
+if os.path.exists(f"cache/train_bows_{VOCAB_SIZE}.pkl"):
+    with open(f"cache/train_bows_{VOCAB_SIZE}.pkl", "rb") as f:
         bows = pickle.load(f)
 else:
     bows = np.array(
@@ -137,7 +138,7 @@ else:
             for im in tqdm.tqdm(X_train, desc="Generating BoWs for training set")
         ]
     )
-    with open("cache/train_bows.pkl", "wb") as f:
+    with open(f"cache/train_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(bows, f)
 
 ## Train the classifier
@@ -152,8 +153,8 @@ print(f"Classifier trained in {time() - start} seconds")
 train_accuracy = classifier.score(bows, y_train)
 
 # Validation
-if os.path.exists("cache/val_bows.pkl"):
-    with open("cache/val_bows.pkl", "rb") as f:
+if os.path.exists(f"cache/val_bows_{VOCAB_SIZE}.pkl"):
+    with open(f"cache/val_bows_{VOCAB_SIZE}.pkl", "rb") as f:
         val_bows = pickle.load(f)
 else:
     val_bows = np.array(
@@ -162,13 +163,13 @@ else:
             for im in tqdm.tqdm(X_val, desc="Generating BoWs for validation set")
         ]
     )
-    with open("cache/val_bows.pkl", "wb") as f:
+    with open(f"cache/val_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(val_bows, f)
 val_accuracy = classifier.score(val_bows, y_val)
 
 # Test
-if os.path.exists("cache/test_bows.pkl"):
-    with open("cache/test_bows.pkl", "rb") as f:
+if os.path.exists(f"cache/test_bows_{VOCAB_SIZE}.pkl"):
+    with open(f"cache/test_bows_{VOCAB_SIZE}.pkl", "rb") as f:
         test_bows = pickle.load(f)
 else:
     test_bows = np.array(
@@ -177,7 +178,7 @@ else:
             for im in tqdm.tqdm(X_test, desc="Generating BoWs for test set")
         ]
     )
-    with open("cache/test_bows.pkl", "wb") as f:
+    with open(f"cache/test_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(test_bows, f)
 test_accuracy = classifier.score(test_bows, y_test)
 
@@ -185,10 +186,22 @@ print(f"Train accuracy: {train_accuracy}")
 print(f"Validation accuracy: {val_accuracy}")
 print(f"Test accuracy: {test_accuracy}")
 
+# Saving output
+with open(f"output/output_{VOCAB_SIZE}.txt", "w") as f:
+    f.write(f"Train accuracy: {train_accuracy}\n")
+    f.write(f"Validation accuracy: {val_accuracy}\n")
+    f.write(f"Test accuracy: {test_accuracy}\n")
+
 
 # PCA and TSNE Visualization
+print("Plotting PCA and TSNE visualizations")
 fig = visualize(bows, y_train)
+fig.savefig(f"output/visualization_{VOCAB_SIZE}.png")
 plt.show()
+
+
+
+
 
 
 
