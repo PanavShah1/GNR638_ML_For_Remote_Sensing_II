@@ -8,10 +8,15 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import tqdm
+from sklearn.decomposition import PCA
+from visualization import visualize
+from time import time
 
 ## Config variables
-IMAGES_PATH = "./datasets/Images"
+IMAGES_PATH = "./datasets/UCMerced_LandUse/Images"
 VOCAB_SIZE = 400
+
+os.makedirs("./cache", exist_ok=True)
 
 ## Initialize SIFT
 SIFT = cv2.SIFT_create()  # type: ignore
@@ -35,6 +40,7 @@ def get_bow_representation(im: np.ndarray) -> np.ndarray:
     bow = bow.astype(np.float32)
     bow = bow / np.sum(bow)
     return bow
+
 
 
 ## Read the dataset
@@ -112,7 +118,10 @@ if os.path.exists("cache/vocab_model.pkl"):
         vocab_model = pickle.load(f)
 else:
     vocab_model = KMeans(n_clusters=VOCAB_SIZE + 1, random_state=42)
+    print("Started training KMeans model")
+    start = time()
     vocab_model.fit(all_keypoints)
+    print(f"KMeans model trained in {time() - start} seconds")
     with open("cache/vocab_model.pkl", "wb") as f:
         pickle.dump(vocab_model, f)
 
@@ -133,7 +142,10 @@ else:
 
 ## Train the classifier
 classifier = KNeighborsClassifier(n_neighbors=len(categories))
+print("Started training classifier")
+start = time()
 classifier.fit(bows, y_train)
+print(f"Classifier trained in {time() - start} seconds")
 
 ## Evaluate the classifier
 # Training
@@ -173,13 +185,14 @@ print(f"Train accuracy: {train_accuracy}")
 print(f"Validation accuracy: {val_accuracy}")
 print(f"Test accuracy: {test_accuracy}")
 
-## Visualize all the keypoints using TSNE
-# TODO: Figure out why this is taking so long
-# tsne = TSNE(n_components=2, random_state=42)
-# tsne_keypoints = tsne.fit_transform(all_keypoints)
-# plt.figure(figsize=(10, 10))
-# plt.scatter(
-#     tsne_keypoints[:, 0], tsne_keypoints[:, 1], c=vocab_model.predict(all_keypoints)
-# )
-# plt.title("TSNE visualization of keypoints")
-# plt.show()
+
+# PCA and TSNE Visualization
+fig = visualize(bows, y_train)
+plt.show()
+
+
+
+
+# TODO: Run the code for various VOCAB_SIZE values
+
+
