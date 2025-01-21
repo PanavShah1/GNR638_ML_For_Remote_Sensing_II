@@ -13,9 +13,11 @@ from visualization import visualize
 from time import time
 
 ## Config variables
-IMAGES_PATH = "../datasets/UCMerced_LandUse/Images"
-VOCAB_SIZE = 1000
+IMAGES_PATH = "./datasets/Images"
+VOCAB_SIZE = 250
+N_NEIGHBORS = 5
 
+## Make the required directories
 os.makedirs("./cache", exist_ok=True)
 os.makedirs("./output", exist_ok=True)
 
@@ -41,7 +43,6 @@ def get_bow_representation(im: np.ndarray) -> np.ndarray:
     bow = bow.astype(np.float32)
     bow = bow / np.sum(bow)
     return bow
-
 
 
 ## Read the dataset
@@ -142,9 +143,9 @@ else:
         pickle.dump(bows, f)
 
 ## Train the classifier
-classifier = KNeighborsClassifier(n_neighbors=len(categories))
-print("Started training classifier")
+classifier = KNeighborsClassifier(n_neighbors=N_NEIGHBORS)
 start = time()
+print("Started training classifier")
 classifier.fit(bows, y_train)
 print(f"Classifier trained in {time() - start} seconds")
 
@@ -198,14 +199,3 @@ print("Plotting PCA and TSNE visualizations")
 fig = visualize(bows, y_train)
 fig.savefig(f"output/visualization_{VOCAB_SIZE}.png")
 plt.show()
-
-
-
-
-
-
-
-
-# TODO: Run the code for various VOCAB_SIZE values
-
-
