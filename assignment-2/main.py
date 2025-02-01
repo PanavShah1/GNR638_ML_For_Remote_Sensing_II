@@ -4,17 +4,16 @@ import numpy as np
 import cv2
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
+import tensorflow as tf
+import keras
+from keras import layers
 import tqdm
-from sklearn.decomposition import PCA
-from visualization import visualize
 from time import time
 
 ## Config variables
-IMAGES_PATH = "../datasets/UCMerced_LandUse/Images"
+IMAGES_PATH = "./datasets/Images"
 VOCAB_SIZE = 250
+N_NEIGHBORS = 5
 
 ## Make the required directories
 os.makedirs("./cache", exist_ok=True)
@@ -42,6 +41,33 @@ def get_bow_representation(im: np.ndarray) -> np.ndarray:
     bow = bow.astype(np.float32)
     bow = bow / np.sum(bow)
     return bow
+
+
+def create_bow_classifier(
+    input_dim=250, hidden_dim1=128, hidden_dim2=64, num_classes=21
+):
+    model = keras.Sequential(
+        [
+            layers.Input((input_dim,)),
+            # First layer
+            layers.Dense(hidden_dim1, activation="relu"),
+            layers.BatchNormalization(),
+            layers.Dropout(0.3),
+            # Second layer
+            layers.Dense(hidden_dim2, activation="relu"),
+            layers.BatchNormalization(),
+            layers.Dropout(0.2),
+            # Output layer
+            layers.Dense(num_classes, activation="softmax"),
+        ]
+    )
+
+    # Compile the model
+    model.compile(
+        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+
+    return model
 
 
 ## Read the dataset
@@ -142,16 +168,22 @@ else:
         pickle.dump(bows, f)
 
 ## Train the classifier
-classifier = KNeighborsClassifier(n_neighbors=N_NEIGHBORS)
+classifier = create_bow_classifier(input_dim=VOCAB_SIZE, num_classes=len(categories))
+bows = tf.convert_to_tensor(bows, dtype=tf.float32)
+y_train = (
+    tf.one_hot(np.array([categories.index(y) for y in y_train]), len(categories)),
+)
 start = time()
 print("Started training classifier")
-classifier.fit(bows, y_train)
+classifier.fit(
+    bows,
+    y_train,
+    epochs=10,
+    batch_size=32,
+)
 print(f"Classifier trained in {time() - start} seconds")
 
 ## Evaluate the classifier
-# Training
-train_accuracy = classifier.score(bows, y_train)
-
 # Validation
 if os.path.exists(f"cache/val_bows_{VOCAB_SIZE}.pkl"):
     with open(f"cache/val_bows_{VOCAB_SIZE}.pkl", "rb") as f:
@@ -165,7 +197,10 @@ else:
     )
     with open(f"cache/val_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(val_bows, f)
-val_accuracy = classifier.score(val_bows, y_val)
+
+val_preds = classifier.predict(val_bows)
+val_preds = np.argmax(val_preds, axis=1)
+val_accuracy = np.mean(val_preds == np.array([categories.index(y) for y in y_val]))
 
 # Test
 if os.path.exists(f"cache/test_bows_{VOCAB_SIZE}.pkl"):
@@ -180,21 +215,15 @@ else:
     )
     with open(f"cache/test_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(test_bows, f)
-test_accuracy = classifier.score(test_bows, y_test)
 
-print(f"Train accuracy: {train_accuracy}")
+test_preds = classifier.predict(test_bows)
+test_preds = np.argmax(test_preds, axis=1)
+test_accuracy = np.mean(test_preds == np.array([categories.index(y) for y in y_test]))
+
 print(f"Validation accuracy: {val_accuracy}")
 print(f"Test accuracy: {test_accuracy}")
 
 # Saving output
 with open(f"output/output_{VOCAB_SIZE}.txt", "w") as f:
-    f.write(f"Train accuracy: {train_accuracy}\n")
     f.write(f"Validation accuracy: {val_accuracy}\n")
     f.write(f"Test accuracy: {test_accuracy}\n")
-
-
-# PCA and TSNE Visualization
-print("Plotting PCA and TSNE visualizations")
-fig = visualize(bows, y_train)
-fig.savefig(f"output/visualization_{VOCAB_SIZE}.png")
-plt.show()
