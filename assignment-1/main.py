@@ -14,7 +14,7 @@ from time import time
 
 ## Config variables
 IMAGES_PATH = "../datasets/UCMerced_LandUse/Images"
-VOCAB_SIZE = 1000
+VOCAB_SIZE = 250
 
 os.makedirs("./cache", exist_ok=True)
 os.makedirs("./output", exist_ok=True)
