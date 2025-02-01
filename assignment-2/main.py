@@ -9,9 +9,11 @@ import keras
 from keras import layers
 import tqdm
 from time import time
+import matplotlib.pyplot as plt
+from visualization import visualize
 
 ## Config variables
-IMAGES_PATH = "./datasets/Images"
+IMAGES_PATH = "../datasets/UCMerced_LandUse/Images"
 VOCAB_SIZE = 250
 N_NEIGHBORS = 5
 
@@ -71,8 +73,8 @@ def create_bow_classifier(
 
 
 ## Read the dataset
-if os.path.exists("./cache/dataset.pkl"):
-    with open("./cache/dataset.pkl", "rb") as f:
+if os.path.exists("../assignment-1/cache/dataset.pkl"):
+    with open("../assignment-1/cache/dataset.pkl", "rb") as f:
         data = pickle.load(f)
         categories = data["categories"]
         X_train = data["X_train"]
@@ -112,7 +114,7 @@ else:
     )
 
     # Save the dataset to cache
-    with open("./cache/dataset.pkl", "wb") as f:
+    with open("../assignment-1/cache/dataset.pkl", "wb") as f:
         pickle.dump(
             {
                 "categories": categories,
@@ -128,20 +130,20 @@ else:
 
 
 ## Find all the keypoints
-if os.path.exists("cache/all_keypoints.pkl"):
-    with open("cache/all_keypoints.pkl", "rb") as f:
+if os.path.exists("../assignment-1/cache/all_keypoints.pkl"):
+    with open("../assignment-1/cache/all_keypoints.pkl", "rb") as f:
         all_keypoints = pickle.load(f)
 else:
     all_keypoints = []
     for im in tqdm.tqdm(X_train, desc="Finding keypoints in training set"):
         all_keypoints.extend(get_img_keypoints(im))
     all_keypoints = np.array(all_keypoints)
-    with open("cache/all_keypoints.pkl", "wb") as f:
+    with open("../assignment-1/cache/all_keypoints.pkl", "wb") as f:
         pickle.dump(all_keypoints, f)
 
 ## Generate a vocabulary
-if os.path.exists(f"cache/vocab_model_{VOCAB_SIZE}.pkl"):
-    with open(f"cache/vocab_model_{VOCAB_SIZE}.pkl", "rb") as f:
+if os.path.exists(f"../assignment-1/cache/vocab_model_{VOCAB_SIZE}.pkl"):
+    with open(f"../assignment-1/cache/vocab_model_{VOCAB_SIZE}.pkl", "rb") as f:
         vocab_model = pickle.load(f)
 else:
     vocab_model = KMeans(n_clusters=VOCAB_SIZE + 1, random_state=42)
@@ -154,8 +156,8 @@ else:
 
 bows, val_bows, test_bows = None, None, None
 ## Generate the Bag of Words representation of the images
-if os.path.exists(f"cache/train_bows_{VOCAB_SIZE}.pkl"):
-    with open(f"cache/train_bows_{VOCAB_SIZE}.pkl", "rb") as f:
+if os.path.exists(f"../assignment-1/cache/train_bows_{VOCAB_SIZE}.pkl"):
+    with open(f"../assignment-1/cache/train_bows_{VOCAB_SIZE}.pkl", "rb") as f:
         bows = pickle.load(f)
 else:
     bows = np.array(
@@ -164,20 +166,20 @@ else:
             for im in tqdm.tqdm(X_train, desc="Generating BoWs for training set")
         ]
     )
-    with open(f"cache/train_bows_{VOCAB_SIZE}.pkl", "wb") as f:
+    with open(f"../assignment-1/cache/train_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(bows, f)
 
 ## Train the classifier
 classifier = create_bow_classifier(input_dim=VOCAB_SIZE, num_classes=len(categories))
 bows = tf.convert_to_tensor(bows, dtype=tf.float32)
-y_train = (
+y_train_ohe = (
     tf.one_hot(np.array([categories.index(y) for y in y_train]), len(categories)),
 )
 start = time()
 print("Started training classifier")
 classifier.fit(
     bows,
-    y_train,
+    y_train_ohe,
     epochs=10,
     batch_size=32,
 )
@@ -185,8 +187,8 @@ print(f"Classifier trained in {time() - start} seconds")
 
 ## Evaluate the classifier
 # Validation
-if os.path.exists(f"cache/val_bows_{VOCAB_SIZE}.pkl"):
-    with open(f"cache/val_bows_{VOCAB_SIZE}.pkl", "rb") as f:
+if os.path.exists(f"../assignment-1/cache/val_bows_{VOCAB_SIZE}.pkl"):
+    with open(f"../assignment-1/cache/val_bows_{VOCAB_SIZE}.pkl", "rb") as f:
         val_bows = pickle.load(f)
 else:
     val_bows = np.array(
@@ -195,7 +197,7 @@ else:
             for im in tqdm.tqdm(X_val, desc="Generating BoWs for validation set")
         ]
     )
-    with open(f"cache/val_bows_{VOCAB_SIZE}.pkl", "wb") as f:
+    with open(f"../assignment-1/cache/val_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(val_bows, f)
 
 val_preds = classifier.predict(val_bows)
@@ -203,8 +205,8 @@ val_preds = np.argmax(val_preds, axis=1)
 val_accuracy = np.mean(val_preds == np.array([categories.index(y) for y in y_val]))
 
 # Test
-if os.path.exists(f"cache/test_bows_{VOCAB_SIZE}.pkl"):
-    with open(f"cache/test_bows_{VOCAB_SIZE}.pkl", "rb") as f:
+if os.path.exists(f"../assignment-1/cache/test_bows_{VOCAB_SIZE}.pkl"):
+    with open(f"../assignment-1/cache/test_bows_{VOCAB_SIZE}.pkl", "rb") as f:
         test_bows = pickle.load(f)
 else:
     test_bows = np.array(
@@ -213,7 +215,7 @@ else:
             for im in tqdm.tqdm(X_test, desc="Generating BoWs for test set")
         ]
     )
-    with open(f"cache/test_bows_{VOCAB_SIZE}.pkl", "wb") as f:
+    with open(f"../assignment-1/cache/test_bows_{VOCAB_SIZE}.pkl", "wb") as f:
         pickle.dump(test_bows, f)
 
 test_preds = classifier.predict(test_bows)
@@ -224,6 +226,10 @@ print(f"Validation accuracy: {val_accuracy}")
 print(f"Test accuracy: {test_accuracy}")
 
 # Saving output
-with open(f"output/output_{VOCAB_SIZE}.txt", "w") as f:
+with open(f"output/output_mlp1_{VOCAB_SIZE}.txt", "w") as f:
     f.write(f"Validation accuracy: {val_accuracy}\n")
     f.write(f"Test accuracy: {test_accuracy}\n")
+
+fig = visualize(bows, y_train)
+fig.savefig(f"output/visualization_mlp1_{VOCAB_SIZE}.png")
+# plt.show()
