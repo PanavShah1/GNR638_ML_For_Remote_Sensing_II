@@ -21,7 +21,7 @@ os.makedirs("./output", exist_ok=True)
 
 
 def create_bow_classifier(
-    input_dim=72*72, hidden_dim1=128, hidden_dim2=64, num_classes=21
+    input_dim=72*72, hidden_dim1=1024, hidden_dim2=128, num_classes=21
 ):
     model = keras.Sequential(
         [
@@ -113,25 +113,18 @@ y_train_ohe = (
 start = time()
 print("Started training classifier")
 X_train = np.array(X_train).reshape(len(X_train), -1)  # Flatten each image
-
+X_val = np.array(X_val).reshape(len(X_val), -1)
+y_val_ohe = (
+    tf.one_hot(np.array([categories.index(y) for y in y_val]), len(categories)),
+)
 classifier.fit(
     X_train,
     y_train_ohe,
     epochs=10,
     batch_size=32,
+    validation_data=(X_val, y_val_ohe),
 )
 print(f"Classifier trained in {time() - start} seconds")
-
-
-## Evaluate the classifier
-# Validation
-X_val = np.array(X_val).reshape(len(X_val), -1)
-y_val_ohe = (
-    tf.one_hot(np.array([categories.index(y) for y in y_val]), len(categories)),
-)
-val_preds = classifier.predict(X_val)
-val_preds = np.argmax(val_preds, axis=1)
-val_accuracy = np.mean(val_preds == np.array([categories.index(y) for y in y_val]))
 
 # Test
 X_test = np.array(X_test).reshape(len(X_test), -1)
@@ -142,10 +135,10 @@ test_preds = classifier.predict(X_test)
 test_preds = np.argmax(test_preds, axis=1)
 test_accuracy = np.mean(test_preds == np.array([categories.index(y) for y in y_test]))
 
-print(f"Validation accuracy: {val_accuracy}")
+# print(f"Validation accuracy: {val_accuracy}")
 print(f"Test accuracy: {test_accuracy}")
 
 # Saving output
 with open(f"output/output_mlp2.txt", "w") as f:
-    f.write(f"Validation accuracy: {val_accuracy}\n")
+    # f.write(f"Validation accuracy: {val_accuracy}\n")
     f.write(f"Test accuracy: {test_accuracy}\n")
