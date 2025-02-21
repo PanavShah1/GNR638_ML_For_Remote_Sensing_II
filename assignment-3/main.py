@@ -29,31 +29,48 @@ def create_cnn(
     model = keras.Sequential([
         layers.Input(shape=input_dim),
 
-        # First Conv Block
-        layers.Conv2D(32, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
-        layers.MaxPooling2D((2, 2)),
-        # layers.Dropout(0.2),
-
         # Second Conv Block
         layers.Conv2D(64, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
-        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.MaxPooling2D((2, 2), strides=(2, 2), padding="same"),
         # layers.Dropout(0.2),
 
         # Third Conv Block
         layers.Conv2D(128, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
-        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(128, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.MaxPooling2D((2, 2), strides=(2, 2), padding="same"),
         # layers.Dropout(0.2),
+
+        # Fourth Conv Block
+        layers.Conv2D(256, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.Conv2D(256, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.Conv2D(256, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.MaxPooling2D((2, 2), strides=(2, 2), padding="same"),
+        # layers.Dropout(0.2),
+
+        layers.Conv2D(512, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.Conv2D(512, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.Conv2D(512, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.MaxPooling2D((2, 2), strides=(2, 2), padding="same"),
+
+        layers.Conv2D(512, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.Conv2D(512, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.Conv2D(512, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(0.001)),
+        layers.MaxPooling2D((2, 2), strides=(2, 2), padding="same"),
+
 
         # Flatten and Fully Connected Layers
         layers.Flatten(),
-        layers.Dense(512, activation="relu"),
-        layers.Dropout(0.2),
+        layers.Dense(4096, activation="relu"),
+        layers.Dense(4096, activation="relu"),
+        # layers.Dropout(0.2),
         layers.Dense(num_classes, activation="softmax"),
     ])
 
     # Compile the model
+    optimizer = keras.optimizers.Adam(lr=0.005)
     model.compile(
-        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+        optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"]
     )
 
     return model
@@ -119,6 +136,7 @@ else:
 
 ## Train the classifier
 classifier = create_cnn(input_dim=(224,224,3), num_classes=len(categories))
+print(classifier.summary())
 y_train_ohe = (
     tf.one_hot(np.array([categories.index(y) for y in y_train]), len(categories))
 )
@@ -160,5 +178,4 @@ print(f"Test accuracy: {test_accuracy}")
 # Saving output
 with open(f"output/output_cnn.txt", "w") as f:
     # f.write(f"Validation accuracy: {val_accuracy}\n")
-    f.write(metrics)
-
+    f.write(str(metrics))

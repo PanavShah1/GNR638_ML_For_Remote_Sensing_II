@@ -15,6 +15,7 @@ from time import time
 ## Config variables
 IMAGES_PATH = "../datasets/UCMerced_LandUse/Images"
 VOCAB_SIZE = 250
+N_NEIGHBORS = 21
 
 ## Make the required directories
 os.makedirs("./cache", exist_ok=True)
