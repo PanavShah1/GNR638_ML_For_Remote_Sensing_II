@@ -1,10 +1,39 @@
-# Assignment 1
+# Image Classification using SIFT and Bag of Visual Words
+
+This assignment implements image classification using SIFT (Scale-Invariant Feature Transform) features and the Bag of Visual Words (BoVW) approach. The implementation uses K-Means clustering for vocabulary generation and K-Nearest Neighbors (KNN) for classification.
+
+## Dataset
+
+The project uses the UC Merced Land Use Dataset, which contains aerial images of different land use categories.
 
 Dataset: https://vincmazet.github.io/bip/detection/edges.html
 
-## Validation Accuracies:
+## Implementation Details
 
-#### KNN(n=5)
+### Feature Extraction
+
+- SIFT (Scale-Invariant Feature Transform) is used to extract keypoints and descriptors from images
+- Each keypoint descriptor is a 128-dimensional vector
+- OpenCV's SIFT implementation is utilized
+
+### Bag of Visual Words Approach
+
+1. **Feature Extraction**: SIFT features are extracted from all training images
+2. **Vocabulary Generation**: K-Means clustering is applied to create a visual vocabulary
+3. **Image Representation**: Each image is represented as a histogram of visual words
+4. **Classification**: KNN classifier is used for final classification
+
+### Data Split
+
+- Training: 70%
+- Validation: 10%
+- Testing: 20%
+
+## Results
+
+### Validation Performance
+
+The model was tested with different vocabulary sizes (K) and KNN configurations. Here are the validation accuracies:
 
 | Codewords | Accuracy |
 | --------- | -------- |
@@ -23,40 +52,25 @@ Dataset: https://vincmazet.github.io/bip/detection/edges.html
 | 650       | 0.5095   |
 | 700       | 0.5048   |
 
-#### Best Model
+### Best Model Configuration
 
-K = 250 and n = 5
-
-## Testing Accuracy
-
-| Codewords | Accuracy |
-| --------- | -------- |
-| 50        | 0.5857   |
-| 250       | 0.5214   |
-
-#### Best Model
-
-K = 50 and n = 5
+- Validation: K=250 codewords with n=5 neighbors (56.19% accuracy)
+- Testing: K=50 codewords with n=5 neighbors (58.57% accuracy)
 
 ## Analysis
 
-### Classification Accuracy
+### Classification Performance
 
-The classification accuracy was tested with two different K-NN configurations (n=21 and n=5) across various numbers of codewords. The best performance was achieved with K=250 and n=5, yielding a validation accuracy of approximately 56.19%.
+- The model achieved best validation accuracy with 250 codewords
+- However, we also tested with some other codewords which had close accuracies in validation. The model with 50 codewords performed better during the testing phase.
+- Performance generally degraded with vocabulary sizes larger than 250
 
-However, during testing phase, it was noticed that the model with K=50 outperformed the model with K=250 by a significant margin!
+### Visualization
 
-### Accuracy vs Number of Codewords
+The project includes both t-SNE visualizations of the feature space and the accuracy plot for different number of codewords:
 
-![Accuracy vs Codewords](./assets/accuracy_plot.png)
+- 2D and 3D t-SNE visualizations show cluster formations:
+  ![TSNE Plot](assets/tsne_plot.png)
 
-The graph shows how classification accuracy varies with different numbers of codewords. We observe that:
-
-- Initial performance improves as codewords increase up to 250
-- Performance generally degrades with more than 250 codewords
-
-### t-SNE & PCA Visualization
-
-The t-SNE and PCA visualizations of SIFT keypoints (128-dimensional):
-
-![t-SNE Visualization](./assets/tsne_plot.png)
+- Line graph of the accuracy vs the number of codewords:
+  ![Accuracy vs Number of Codewords](assets/accuracy_plot.png)
