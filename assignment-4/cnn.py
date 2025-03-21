@@ -26,7 +26,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 BATCH_SIZE = 32
 IMAGE_PATH = "../datasets/UCMerced_LandUse/Images"
-OUTPUT_PATH = "output_cnn"
+OUTPUT_PATH = "output/adadelta"
 
 img_transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor(),
                                     transforms.Normalize((0.5,), (0.5,))])
@@ -141,7 +141,7 @@ train_loader, test_loader, val_loader = DataLoader(train_set, batch_size=BATCH_S
 
 model = CNN(num_classes=len(class_to_idx)).to(device)
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+optimizer = torch.optim.Adadelta(model.parameters(), lr=0.001)
 
 timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
