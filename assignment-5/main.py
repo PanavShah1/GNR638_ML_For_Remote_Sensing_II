@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.datasets as datasets
+import torchvision.transforms as transforms
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 
@@ -14,8 +15,8 @@ LATENT_DIM_1 = 128  # Dimension of the first latent layer (z1)
 LATENT_DIM_2 = 64  # Dimension of the second latent layer (z2)
 IMAGE_SIZE = 256
 BETA = 1.0  # Weight for the KL divergence term
-IMAGE_PATH = "../datasets/UCMerced_LandUse/Images"
-OUTPUT_PATH = "output/adadelta"
+IMAGE_PATH = "./datasets/Images"
+OUTPUT_PATH = "output/hvae"
 EPOCHS = 100
 
 os.makedirs(OUTPUT_PATH, exist_ok=True)
@@ -236,8 +237,20 @@ def elbo_loss(
     return loss, BCE, KL_z1, KL_z2
 
 
+# --- Transform the Input ---
+img_transform = transforms.Compose(
+    [
+        transforms.Resize((256, 256)),
+        transforms.ToTensor(),
+        # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ]
+)
+
+
 # --- Load the data ---
-dataset = datasets.ImageFolder(root=IMAGE_PATH)
+dataset = datasets.ImageFolder(
+    root=IMAGE_PATH, transform=img_transform, target_transform=None
+)
 dataloader = DataLoader(
     dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True
 )
@@ -327,3 +340,10 @@ def train(epoch):
             sample_path = os.path.join(OUTPUT_PATH, "samples", f"sample_{epoch}.png")
             samples = model.sample(num_samples=64)
             save_image(samples.cpu(), sample_path, nrow=8)
+
+
+if __name__ == "__main__":
+    for epoch in range(1, EPOCHS + 1):
+        train(epoch)
+
+    torch.save(model.state_dict(), os.path.join(OUTPUT_PATH, "hvae.pth"))
