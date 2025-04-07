@@ -48,7 +48,6 @@ class HVAE(nn.Module):
         self.latent_dim_1 = latent_dim_1
         self.latent_dim_2 = latent_dim_2
         self.img_size = img_size
-        hidden_dim_conv = img_size * img_size  # Dimension after flattening conv layers
 
         # == Encoder q(z1|x) ==
         self.encoder_conv1 = nn.Conv2d(
