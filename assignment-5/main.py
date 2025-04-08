@@ -17,7 +17,7 @@ IMAGE_SIZE = 256
 BETA = 1.0  # Weight for the KL divergence term
 IMAGE_PATH = "./datasets/Images"
 OUTPUT_PATH = "output/hvae"
-EPOCHS = 100
+EPOCHS = 50
 
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_PATH, "reconstructions"), exist_ok=True)
@@ -326,15 +326,6 @@ def train(epoch):
     # Save reconstructions and samples periodically
     if epoch % 5 == 0 or epoch == EPOCHS:
         with torch.no_grad():
-            # Save reconstructions of the first batch
-            recon_path = os.path.join(
-                OUTPUT_PATH, "reconstructions", f"reconstruction_{epoch}.png"
-            )
-            comparison = torch.cat(
-                [data[:8], recon_batch.view(BATCH_SIZE, 3, IMAGE_SIZE, IMAGE_SIZE)[:8]]
-            )
-            save_image(comparison.cpu(), recon_path, nrow=8)
-
             # Save generated samples
             sample_path = os.path.join(OUTPUT_PATH, "samples", f"sample_{epoch}.png")
             samples = model.sample(num_samples=64)

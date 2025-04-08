@@ -33,5 +33,6 @@ The latent dimensions used are `LATENT_DIM_1 = 128` and `LATENT_DIM_2 = 64`.
 
 ## Example Outputs
 
-- **Reconstructions:** `output/hvae/reconstructions/reconstruction_100.png`
-- **Generated Samples:** `output/hvae/samples/sample_100.png`
+- **Generated Samples:** `output/hvae/samples/sample_50.png`
+
+![set of 64 samples generated after 50 epochs](assets/sample_50.png)
